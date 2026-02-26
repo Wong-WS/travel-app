@@ -39,6 +39,7 @@ function WorldMap({ visits, onCountryClick, interactive = true }: WorldMapProps)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const isDragging = useRef(false)
+  const hasDragged = useRef(false)
   const lastPos = useRef<{ x: number; y: number } | null>(null)
 
   const visitedCodes = new Set(visits.map((v) => v.country_code))
@@ -59,6 +60,7 @@ function WorldMap({ visits, onCountryClick, interactive = true }: WorldMapProps)
   function handleMouseDown(e: React.MouseEvent) {
     if (!interactive) return
     isDragging.current = true
+    hasDragged.current = false
     lastPos.current = { x: e.clientX, y: e.clientY }
   }
 
@@ -66,6 +68,7 @@ function WorldMap({ visits, onCountryClick, interactive = true }: WorldMapProps)
     if (!interactive || !isDragging.current || !lastPos.current) return
     const dx = e.clientX - lastPos.current.x
     const dy = e.clientY - lastPos.current.y
+    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasDragged.current = true
     setRotation(([lon, lat, roll]) => [
       lon + dx * 0.4,
       Math.max(-90, Math.min(90, lat - dy * 0.4)),
@@ -127,7 +130,7 @@ function WorldMap({ visits, onCountryClick, interactive = true }: WorldMapProps)
                   onMouseEnter={() => setTooltipContent(isVisited ? `${name} (visited)` : name)}
                   onMouseLeave={() => setTooltipContent('')}
                   onClick={() => {
-                    if (interactive && onCountryClick) {
+                    if (interactive && onCountryClick && !hasDragged.current) {
                       onCountryClick(name, code)
                     }
                   }}
